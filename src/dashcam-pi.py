@@ -322,12 +322,24 @@ class StreamingServer(socketserver.ThreadingMixIn, server.HTTPServer):
   allow_reuse_address = True
   daemon_threads = True
 
-# capture picture from main camera image stream and make its thumbnail copy
+# 功能：从主摄像头抓拍一张原图，并且生成一张小尺寸的缩略图
 def save_with_thumbnail(origin):
+  # 1. 生成缩略图的文件名
+  # 把原图文件名里的 PHOTO 替换成 THUMB，得到缩略图路径
+  # 例如：photo_001.jpg → thumb_001.jpg
   thumb = origin.replace('PHOTO', 'THUMB')
+
+  # 2. 控制摄像头，拍摄一张照片并保存到 origin 路径
   camera.capture_file(origin)
+
+  # 3. 用 PIL 库打开刚才拍好的原图
   img = Image.open(origin)
+
+  # 4. 生成缩略图（尺寸缩放到 160x90）
+  # Image.NEAREST = 最近邻插值（速度最快，适合嵌入式/树莓派）
   img.thumbnail((160, 90), Image.NEAREST)
+
+  # 5. 把缩小后的图片保存成缩略图文件
   img.save(thumb)
 
 # 录像线程核心函数
