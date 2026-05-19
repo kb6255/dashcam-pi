@@ -72,7 +72,27 @@ class StreamingHandler(server.BaseHTTPRequestHandler):
             self.send_response(301)                  # 301 = 永久重定向
             self.send_header('Location', '/index.html') # 跳转到主页
             self.end_headers()
-
+        elif self.path.startswith('/media/disk/'):
+            file_path = self.path
+            try:
+                with open(file_path,'rb') as f:
+                   content = f.read()
+                if file_path.endswith('.jpg'):
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'image/jpeg')
+                elif file_path.endswith('.mp4'):
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'video/mp4')
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                self.send_header('Content-Length', len(content))    
+                self.end_headers()
+                self.wfile.write(content)
+            except Exception as e:
+                self.send_response(404)
+                self.end_headers()
         # ======================
         # 2. 访问首页 index.html（核心页面）
         # ======================
@@ -408,7 +428,7 @@ def stop_video():
 def get_files():
   files = ''
   # list all dcp_*.jpg and dcp_*mp4 files in DCIM folder and its subfolders excluding THUMB subfolder, extract timestamp, path name, then sort from newest to oldest file, return path with filename
-  cmd = 'find /media/disk/DCIM -type f \( -iname "dcp_*.jpg" -o -iname "dcp_*.mp4" -path "*/DCIM/*" \) \( -not -path "*/THUMB/*" \) -printf "%T@\t%p\n" | sort -n -r | cut -f2-'
+  cmd = r'find /media/disk/DCIM -type f \( -iname "dcp_*.jpg" -o -iname "dcp_*.mp4" -path "*/DCIM/*" \) \( -not -path "*/THUMB/*" \) -printf "%T@\t%p\n" | sort -n -r | cut -f2-'
   # cmd = 'find /media/disk/DCIM -type f \( -iname "dcp_*.jpg" -o -iname "dcp_*.mp4" \) -not -path "*/THUMB/*" -printf "%T@\t%p\n" | sort -n -r | cut -f2-'
   fp = os.popen(cmd)
   for line in fp:
