@@ -442,35 +442,41 @@ def get_files():
   fp.close()
   return files
 
-# Raspberry Pi camera module settings for main high resolution stream and lower resolution stream
-# main stream is for video and pictures, lores is for web streaming
-# change resolutions and quality for your purposes
-try:
-  camera = Picamera2()
-  output = StreamingOutput()
-  main_stream = {'size': (1280, 720)}
-  lores_stream = {'size': (640, 360), 'format': 'YUV420'}
-  config = camera.create_video_configuration(main_stream, lores_stream, encode = 'lores')
-  camera.configure(config)
-  camera.start()
-  streaming_encoder = MJPEGEncoder()
-  streaming_encoder.quality = 10
-  recording_encoder = H264Encoder(5000000)
-  quality = Quality.VERY_HIGH
 
-  # uncomment these lines if you want to start video recording right away
-  #recording = True
-  #recording_thread = threading.Thread(target = record_video)
-  #recording_thread.start()
-except Exception as e:
-  camera_enabled = False
-  print(e)
+  # 把原来的顶层代码都放进 main() 函数里
+def main():
+    # 摄像头初始化代码
+    try:
+        camera = Picamera2()
+        output = StreamingOutput()
+        main_stream = {'size': (1280, 720)}
+        lores_stream = {'size': (640, 360), 'format': 'YUV420'}
+        config = camera.create_video_configuration(main_stream, lores_stream, encode='lores')
+        camera.configure(config)
+        camera.start()
+        streaming_encoder = MJPEGEncoder()
+        streaming_encoder.quality = 10
+        recording_encoder = H264Encoder(5000000)
+        quality = Quality.VERY_HIGH
 
-# start streaming server
-try:
-  address = ('', 8000)
-  print('IP address http://%s:%s' % (IPAddr, address[1]))
-  server = StreamingServer(address, StreamingHandler)
-  server.serve_forever()
-finally:
-  stop_video()
+        # uncomment these lines if you want to start video recording right away
+        #recording = True
+        #recording_thread = threading.Thread(target = record_video)
+        #recording_thread.start()
+    except Exception as e:
+        camera_enabled = False
+        print(e)
+        return
+
+    # 推流服务代码
+    try:
+        address = ('', 8000)
+        print(f'IP address http://{IPAddr}:{address[1]}')
+        server = StreamingServer(address, StreamingHandler)
+        server.serve_forever()
+    finally:
+        stop_video()
+
+# 加上标准入口判断
+if __name__ == "__main__":
+    main()
